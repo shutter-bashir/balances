@@ -19,6 +19,24 @@ The design is inspired by Apple's iOS, especially the Wallet app, home-screen fo
 
 This is a personal project and is not affiliated with or endorsed by Apple. Bank names and card artwork belong to their respective banks.
 
+## Built with
+
+**Languages**
+
+- **HTML** for the three app screens
+- **CSS** for the iOS styling: frosted-glass blur, spring animations and layouts
+- **JavaScript** for the app logic, API routes, login and card interactions
+- **JSX** for the React components
+
+**Frameworks and tools**
+
+- [Next.js 16](https://nextjs.org) is the app framework: pages, API routes and the password lock
+- [React 19](https://react.dev) powers the pages
+- [Node.js 22](https://nodejs.org) runs the server
+- [Upstash Redis](https://upstash.com) and [Netlify Blobs](https://docs.netlify.com/blobs/overview/) store balances online
+- [Netlify](https://www.netlify.com) and [Vercel](https://vercel.com) are the hosts it deploys to
+- A web app manifest makes it installable to the home screen (PWA)
+
 ## Screens
 
 | Route | Screen | File |
