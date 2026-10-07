@@ -1,0 +1,4 @@
+# Netlify detects Next.js and adds its Next.js adapter automatically; this just pins the build.
+[build]
+  command = "npm run build"
+  publish = ".next"

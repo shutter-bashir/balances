@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Savings Jars</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a dark gallery of stacked "glass over colour" savings widgets, a dashed + tile at the end, and a sheet that opens on tap. */
+:root{
+  --bg:#030805; --fg:#eff6f0; --muted:#86978a; --line:rgba(255,255,255,.09);
+  --surface:#0f1611; --surface-2:#18211a; --accent:#43b549; --accent-ink:#03200a;
+  --danger:#ff6f61; --ok:#5fd16b;
+  --face-top:#1f2b22; --face-bot:#070d09; --ink:#06240f; --glow:#43b549;
+  --font-ui:"Onest",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r-widget:38px; --r-sheet:28px;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){ :root:not([data-theme="dark"]){
+  --bg:#edf3ee; --fg:#0e1a11; --muted:#57685b; --line:rgba(0,0,0,.09);
+  --surface:#ffffff; --surface-2:#f0f5f1; --accent:#1e9a3a; --accent-ink:#ffffff;
+  --danger:#d23b2e; --ok:#1a8a35; --glow:#2aa845; color-scheme:light;
+}}
+:root[data-theme="light"]{
+  --bg:#edf3ee; --fg:#0e1a11; --muted:#57685b; --line:rgba(0,0,0,.09);
+  --surface:#ffffff; --surface-2:#f0f5f1; --accent:#1e9a3a; --accent-ink:#ffffff;
+  --danger:#d23b2e; --ok:#1a8a35; --glow:#2aa845; color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:28px 64px;animation:pageIn .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes pageIn{from{opacity:0;transform:translateY(14px) scale(.985)}}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* header */
+.back-link{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);margin-bottom:18px;transition:transform .15s}
+.back-link:active{transform:scale(.92)}
+.back-link svg{width:20px;height:20px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:28px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.total{font-size:clamp(34px,6vw,52px);font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.05;margin-top:6px}
+.sub{color:var(--muted);font-size:14px;margin-top:6px}
+.actions{display:flex;gap:10px;align-items:center}
+.select{appearance:none;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:10px 34px 10px 16px;font-weight:500;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;background-size:5px 5px;background-repeat:no-repeat}
+.plus-btn{width:48px;height:48px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;
+  box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 35%,transparent);transition:transform .15s}
+.plus-btn:hover{transform:scale(1.06)}
+.plus-btn svg{width:22px;height:22px}
+.banner{font-size:13px;color:var(--muted);border:1px dashed var(--line);border-radius:14px;padding:10px 14px;margin-bottom:22px}
+
+/* grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:34px 28px}
+.sec-head{display:flex;align-items:center;gap:10px;margin:0 0 16px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.sec-head::after{content:"";flex:1;height:1px;background:var(--line)}
+.featured{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:34px 32px;margin-bottom:44px}
+@media (max-width:640px){.featured{grid-template-columns:minmax(0,1fr)}}
+.widget{min-width:0}
+.widget.hi::before{content:"";position:absolute;inset:-9px;border-radius:calc(var(--r-widget) + 9px);border:1.5px solid color-mix(in srgb,var(--glow) 70%,transparent);
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--glow) 12%,transparent),0 0 38px -6px color-mix(in srgb,var(--glow) 55%,transparent);pointer-events:none}
+.widget.hi .face{height:262px}
+.widget.hi .amt{font-size:40px}
+.widget.hi .bal{font-size:34px}
+.badge{position:absolute;top:22px;right:22px;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  color:#d9f5dc;background:rgba(67,181,73,.18);border:1px solid rgba(67,181,73,.45);padding:5px 10px;border-radius:999px}
+.badge svg{width:12px;height:12px;color:#5fd16b}
+.widget.hi .amt{padding-right:120px}
+
+/* widget */
+.widget{position:relative;padding-bottom:92px;border:0;background:none;text-align:left;padding-top:0;padding-inline:0;border-radius:var(--r-widget);
+  transition:transform .2s ease}
+.widget:hover{transform:translateY(-3px)}
+.widget:active{transform:scale(.985)}
+/* press: squish, bounce back, and a ripple of the widget's colour from the tap point */
+.widget.pressed{animation:widgetPress .42s cubic-bezier(.3,.7,.3,1)}
+@keyframes widgetPress{0%{transform:scale(1)}30%{transform:scale(.955)}65%{transform:scale(1.015)}100%{transform:scale(1)}}
+.widget .base{transition:filter .3s ease}
+.widget.pressed .base{filter:brightness(1.2) saturate(1.1)}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;transform:translate(-50%,-50%) scale(0);opacity:.9;
+  background:radial-gradient(circle,color-mix(in srgb,var(--c2) 55%,transparent) 0%,transparent 70%);animation:ripple .65s ease-out forwards}
+@keyframes ripple{to{transform:translate(-50%,-50%) scale(1);opacity:0}}
+.base{position:absolute;left:0;right:0;top:38%;bottom:0;border-radius:var(--r-widget);background:linear-gradient(180deg,var(--c1),var(--c2));
+  box-shadow:0 20px 40px -18px color-mix(in srgb,var(--c2) 60%,transparent)}
+.face{position:relative;z-index:1;height:232px;border-radius:var(--r-widget);padding:26px 26px 22px;display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(180deg,var(--face-top),var(--face-bot));color:#f4f6f5;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1px rgba(255,255,255,.05),0 22px 30px -12px rgba(0,0,0,.65)}
+.amt{font-size:34px;font-weight:500;letter-spacing:-.01em;line-height:1.2;padding-bottom:2px;text-shadow:0 2px 10px rgba(0,0,0,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amt .cur{opacity:.9;margin-right:.18em}
+.spark{flex:1;min-height:0;margin:12px -6px 8px}
+.spark svg{width:100%;height:100%;display:block;overflow:visible}
+.face-label{font-size:13.5px;color:#b9c2c0;font-weight:500}
+.face-label b{font-weight:600;color:var(--c2)}
+.foot{position:absolute;left:26px;right:22px;bottom:0;height:92px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--ink)}
+.bal{font-size:30px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bal small{font-size:.55em;font-weight:600;margin-right:.3em;opacity:.8}
+.pill{flex:none;background:rgba(4,40,14,.24);color:#fff;font-weight:600;font-size:14px;padding:7px 15px;border-radius:999px;max-width:45%;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18)}
+
+/* add tile */
+.add-tile{min-height:324px;border-radius:var(--r-widget);border:2px dashed var(--line);background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted);transition:border-color .2s,color .2s}
+.add-tile:hover{border-color:var(--accent);color:var(--fg)}
+.add-tile .ring{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line)}
+.add-tile svg{width:30px;height:30px;color:var(--accent)}
+.add-tile span{font-weight:500}
+
+/* empty */
+.empty{grid-column:1/-1;color:var(--muted);max-width:44ch}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:50;display:flex;align-items:center;justify-content:center;padding:16px;animation:fade .18s ease}
+.sheet{width:min(460px,100%);max-height:calc(100% - 8px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sheet);padding:22px;animation:rise .24s cubic-bezier(.2,.8,.2,1)}
+@media (max-width:560px){
+  .scrim{align-items:flex-end;padding:0}
+  .sheet{width:100%;border-radius:var(--r-sheet) var(--r-sheet) 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px));max-height:92%}
+}
+@keyframes fade{from{opacity:0}}
+@keyframes rise{from{transform:translateY(24px);opacity:0}}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px}
+.sheet-title{font-size:18px;font-weight:600}
+.icon-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--surface-2);display:grid;place-items:center;flex:none}
+.icon-btn svg{width:18px;height:18px}
+.hero{border-radius:22px;padding:20px;background:linear-gradient(180deg,var(--face-top),var(--face-bot));color:#f4f6f5;position:relative;overflow:hidden}
+.hero .lbl{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#9aa4a2}
+.hero .big{font-size:42px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.1;margin-top:4px;word-break:break-all}
+.bar{height:8px;border-radius:99px;background:rgba(255,255,255,.1);margin-top:16px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--c1),var(--c2));transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.bar-meta{display:flex;justify-content:space-between;font-size:13px;color:#b9c2c0;margin-top:8px;font-variant-numeric:tabular-nums}
+.field{display:flex;flex-direction:column;gap:6px;margin-top:16px}
+.field label{font-size:13px;color:var(--muted);font-weight:500}
+.input{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:13px 14px;font-size:16px;font-variant-numeric:tabular-nums}
+.input:focus{outline:none;border-color:var(--accent)}
+.money-in{position:relative}
+.money-in .cur{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:500;pointer-events:none}
+.money-in .input{padding-left:calc(14px + var(--curw,1.4ch) + 8px);font-size:22px;font-weight:500}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--muted)}
+.chip:hover{color:var(--fg);border-color:var(--muted)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.btn{border:0;border-radius:16px;padding:14px 16px;font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn svg{width:18px;height:18px}
+.btn-add{background:var(--accent);color:var(--accent-ink)}
+.btn-ded{background:var(--surface-2);border:1px solid var(--line)}
+.btn-ghost{background:transparent;border:1px solid var(--line)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn:disabled{opacity:.5;cursor:default}
+.err{color:var(--danger);font-size:13px;margin-top:8px;min-height:1em}
+.sec{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:22px 0 8px;font-weight:500}
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.hist li{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.hist .dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px}
+.hist .in .dot{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.hist .out .dot{background:color-mix(in srgb,var(--danger) 18%,transparent);color:var(--danger)}
+.hist .note{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist .when{display:block;font-family:var(--font-mono);font-size:11.5px;color:var(--muted)}
+.hist .v{font-variant-numeric:tabular-nums;font-weight:600}
+.hist .in .v{color:var(--ok)} .hist .out .v{color:var(--danger)}
+.hist-empty{color:var(--muted);font-size:14px;padding:6px 0}
+.swatches{display:flex;gap:10px;flex-wrap:wrap}
+.sw{width:38px;height:38px;border-radius:50%;border:2px solid transparent;background:linear-gradient(160deg,var(--c1),var(--c2));padding:0}
+.sw[aria-pressed="true"]{border-color:var(--fg);box-shadow:0 0 0 3px var(--surface) inset}
+.foot-actions{display:flex;justify-content:space-between;gap:10px;margin-top:22px;flex-wrap:wrap}
+.link{background:none;border:0;color:var(--muted);font-size:14px;padding:6px 0;text-decoration:underline;text-underline-offset:3px}
+.link.danger{color:var(--danger)}
+.confirm{margin-top:14px;border:1px solid color-mix(in srgb,var(--danger) 40%,transparent);border-radius:16px;padding:14px;font-size:14px}
+.confirm .row2{margin-top:12px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:500;font-size:14px;z-index:80;animation:rise .2s ease}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <a class="back-link" href="/" target="_top" aria-label="Back to wallet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
+  <header class="top">
+    <div>
+      <div class="eyebrow">Total saved</div>
+      <div class="total" id="total">—</div>
+      <div class="sub" id="totalSub">Loading your goals…</div>
+    </div>
+    <div class="actions">
+      <select class="select" id="currency" aria-label="Currency">
+        <option value="KSh">KSh KES</option>
+        <option value="$">$ USD</option>
+        <option value="€">€ EUR</option>
+        <option value="£">£ GBP</option>
+        <option value="₦">₦ NGN</option>
+        <option value="₹">₹ INR</option>
+      </select>
+      <button class="plus-btn" id="addTop" aria-label="Add a savings widget">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+    </div>
+  </header>
+  <div class="banner" id="banner" hidden></div>
+  <main>
+    <section id="featWrap" hidden><h2 class="sec-head">Highlighted</h2><div class="featured" id="featured"></div></section>
+    <section><h2 class="sec-head" id="moreHead">My savings</h2><div class="grid" id="grid"></div></section>
+  </main>
+</div>
+<div id="layer"></div>
+
+<script>
+(() => {
+const THEMES = {
+  green: {c1:"#2fa84a", c2:"#7fd85c", name:"Green"},
+  deep:  {c1:"#0d7a3c", c2:"#45b84d", name:"Deep green"},
+  lime:  {c1:"#8fd34a", c2:"#d4f26c", name:"Lime"},
+  mint:  {c1:"#1fbf8f", c2:"#8ef0c4", name:"Mint"},
+  teal:  {c1:"#12a197", c2:"#62e0cf", name:"Teal"},
+  red:   {c1:"#e2382f", c2:"#ff8a6a", name:"Red"},
+};
+const DEF = THEMES.green;
+const HIST_CAP = 300;
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Math.random().toString(36).slice(2,10) + Date.now().toString(36).slice(-4);
+
+let mode = "loading";          // "db" | "local"
+let goals = [];
+let settings = { currency: "KSh" };
+let openSheet = null;          // {kind:'detail'|'edit'|'new', id?}
+let store = null;
+
+/* ---------- formatting ---------- */
+const nf0 = new Intl.NumberFormat(undefined,{maximumFractionDigits:2});
+const money = (n, withCur = true) => (withCur ? settings.currency + " " : "") + nf0.format(Math.round(n*100)/100);
+const balanceOf = g => (g.history||[]).reduce((s,h)=> s + (h.type==="out" ? -h.amt : h.amt), 0);
+function ago(t){
+  const d = (Date.now()-t)/1000;
+  if (d < 60) return "just now";
+  if (d < 3600) return Math.floor(d/60)+"m ago";
+  if (d < 86400) return Math.floor(d/3600)+"h ago";
+  if (d < 86400*7) return Math.floor(d/86400)+"d ago";
+  return new Date(t).toLocaleDateString(undefined,{day:"numeric",month:"short",year:"numeric"});
+}
+function monthNet(g){
+  const now = new Date(), m = now.getMonth(), y = now.getFullYear();
+  return (g.history||[]).reduce((s,h)=>{ const d=new Date(h.t); return (d.getMonth()===m&&d.getFullYear()===y) ? s+(h.type==="out"?-h.amt:h.amt) : s; },0);
+}
+
+/* ---------- sparkline ---------- */
+function series(g){
+  let run = 0; const pts = [0];
+  (g.history||[]).slice().sort((a,b)=>a.t-b.t).forEach(h => { run += h.type==="out" ? -h.amt : h.amt; pts.push(run); });
+  if (pts.length < 2) pts.push(0);
+  return pts.slice(-40);
+}
+function sparkSVG(g, key){
+  const W=300, H=90, p=series(g), th=THEMES[g.theme]||DEF;
+  const max=Math.max(...p), min=Math.min(...p), span=(max-min)||1;
+  const xy = p.map((v,i)=>[ i/(p.length-1)*W, H-6-((v-min)/span)*(H-14) ]);
+  let d = `M${xy[0][0].toFixed(1)},${xy[0][1].toFixed(1)}`;
+  for (let i=0;i<xy.length-1;i++){
+    const p0=xy[i-1]||xy[i], p1=xy[i], p2=xy[i+1], p3=xy[i+2]||p2;
+    const c1=[p1[0]+(p2[0]-p0[0])/6, p1[1]+(p2[1]-p0[1])/6], c2=[p2[0]-(p3[0]-p1[0])/6, p2[1]-(p3[1]-p1[1])/6];
+    d += ` C${c1[0].toFixed(1)},${c1[1].toFixed(1)} ${c2[0].toFixed(1)},${c2[1].toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  const last = xy[xy.length-1], gid = "sg"+key;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${th.c2}" stop-opacity=".22"/><stop offset="1" stop-color="${th.c2}" stop-opacity="0"/></linearGradient></defs>
+    <path d="${d} L${W},${H} L0,${H} Z" fill="url(#${gid})" stroke="none"/>
+    <path d="${d}" fill="none" stroke="${th.c2}" stroke-width="2.2" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+    <circle cx="${last[0]}" cy="${last[1]}" r="3.6" fill="${th.c2}" stroke="#0c0e0e" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+  </svg>`;
+}
+
+/* ---------- render ---------- */
+const PLUS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`;
+const MINUS = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>`;
+const CLOSE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+const EDIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg>`;
+
+function renderTop(){
+  const total = goals.reduce((s,g)=>s+balanceOf(g),0);
+  const month = goals.reduce((s,g)=>s+monthNet(g),0);
+  $("#total").textContent = mode==="loading" ? "—" : money(total);
+  $("#totalSub").textContent = mode==="loading" ? "Loading your goals…"
+    : goals.length ? `${goals.length} saving${goals.length>1?"s":""} · ${month>=0?"+":"−"}${money(Math.abs(month))} this month`
+    : "No savings yet";
+  $("#currency").value = settings.currency;
+}
+function widgetHTML(g, i, hi){
+    const th = THEMES[g.theme]||DEF, net = monthNet(g);
+    const label = g.history?.length
+      ? `<b>${net>=0?"+":"−"}${money(Math.abs(net))}</b> this month`
+      : "Tap to add your first deposit";
+    return `<button class="widget${hi?" hi":""}" data-id="${esc(g.id)}" style="--c1:${th.c1};--c2:${th.c2}" aria-label="${esc(g.name)}: ${esc(money(balanceOf(g)))} saved${hi?", highlighted":""}">
+      <div class="base"></div>
+      <div class="face">
+        ${hi?`<span class="badge"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.9 7.1.6-5.4 4.7 1.7 7.3L12 17.8 5.7 21.5l1.7-7.3L2 9.5l7.1-.6z"/></svg>Top</span>`:""}
+        <div class="amt">${esc(g.name)}</div>
+        <div class="spark">${sparkSVG(g,i)}</div>
+        <div class="face-label">${label}</div>
+      </div>
+      <div class="foot"><span class="bal"><small>${esc(settings.currency)}</small>${nf0.format(balanceOf(g))}</span><span class="pill">Savings</span></div>
+    </button>`;
+}
+function renderGrid(){
+  const grid = $("#grid"), feat = $("#featured");
+  const top = goals.slice(0,2), rest = goals.slice(2);
+  feat.innerHTML = top.map((g,i)=>widgetHTML(g,i,true)).join("");
+  $("#featWrap").hidden = !top.length;
+  $("#moreHead").textContent = top.length ? "More savings" : "My savings";
+  let html = rest.map((g,i)=>widgetHTML(g,i+2,false)).join("");
+  if (mode !== "loading" && !goals.length) html += `<p class="empty">Each saving gets its own widget here. Tap the + tile to create one, then tap the widget to add or deduct money. Your first two widgets are highlighted at the top.</p>`;
+  html += `<button class="add-tile" id="addTile"><div class="ring">${PLUS}</div><span>Add savings widget</span></button>`;
+  grid.innerHTML = html;
+  $("#addTile").onclick = () => openNew();
+  document.querySelectorAll(".widget").forEach(el => el.onclick = e => pressWidget(el, e, () => openDetail(el.dataset.id)));
+}
+function pressWidget(el, e, done){
+  const face = el.querySelector(".face"), r = face.getBoundingClientRect();
+  const fromKeyboard = e.detail === 0;
+  const rip = document.createElement("span"), size = Math.max(r.width, r.height) * 2.2;
+  rip.className = "ripple";
+  rip.style.cssText = `left:${fromKeyboard ? r.width/2 : e.clientX - r.left}px;top:${fromKeyboard ? r.height/2 : e.clientY - r.top}px;width:${size}px;height:${size}px`;
+  face.appendChild(rip);
+  setTimeout(() => rip.remove(), 700);
+  el.classList.remove("pressed"); void el.offsetWidth; el.classList.add("pressed");
+  setTimeout(() => el.classList.remove("pressed"), 450);
+  setTimeout(done, 180);
+}
+function renderAll(){ renderTop(); renderGrid(); if (openSheet) renderSheet(); }
+
+/* ---------- sheets ---------- */
+let draft = {};      // form state for new/edit
+let txErr = "", confirmDelete = false;
+function openNew(){ draft = {name:"", start:"", theme: Object.keys(THEMES)[goals.length % 6]}; openSheet = {kind:"new"}; renderSheet(true); }
+function openEdit(id){ const g=find(id); draft={name:g.name,theme:g.theme}; openSheet={kind:"edit",id}; confirmDelete=false; renderSheet(true); }
+function openDetail(id){ openSheet={kind:"detail",id}; txErr=""; confirmDelete=false; renderSheet(true); }
+function closeSheet(){ openSheet=null; $("#layer").innerHTML=""; }
+const find = id => goals.find(g=>g.id===id);
+
+function renderSheet(focus){
+  const layer = $("#layer");
+  if (!openSheet){ layer.innerHTML=""; return; }
+  const k = openSheet.kind;
+  let body = "";
+  if (k === "detail"){
+    const g = find(openSheet.id); if (!g){ closeSheet(); return; }
+    const th = THEMES[g.theme]||DEF, bal = balanceOf(g), net = monthNet(g);
+    const prevAmt = $("#txAmt")?.value || "", prevNote = $("#txNote")?.value || "";
+    const hist = (g.history||[]).slice().sort((a,b)=>b.t-a.t);
+    body = `<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(g.name)}" style="--c1:${th.c1};--c2:${th.c2}">
+      <div class="sheet-head">
+        <div class="sheet-title">${esc(g.name)}</div>
+        <div style="display:flex;gap:8px">
+          <button class="icon-btn" id="editBtn" aria-label="Edit savings">${EDIT}</button>
+          <button class="icon-btn" id="closeBtn" aria-label="Close">${CLOSE}</button>
+        </div>
+      </div>
+      <div class="hero">
+        <div class="lbl">Balance</div>
+        <div class="big" id="bigBal">${esc(money(bal))}</div>
+        <div class="bar-meta"><span>${net>=0?"+":"−"}${esc(money(Math.abs(net)))} this month</span><span>${(g.history||[]).length} transaction${(g.history||[]).length===1?"":"s"}</span></div>
+      </div>
+      <div class="field">
+        <label for="txAmt">Amount</label>
+        <div class="money-in" style="--curw:${settings.currency.length}ch"><span class="cur">${esc(settings.currency)}</span>
+          <input class="input" id="txAmt" inputmode="decimal" placeholder="0" value="${esc(prevAmt)}" autocomplete="off"></div>
+        <div class="chips">${[100,500,1000,5000].map(v=>`<button class="chip" data-q="${v}">+${nf0.format(v)}</button>`).join("")}</div>
+      </div>
+      <div class="field">
+        <label for="txNote">Note (optional)</label>
+        <input class="input" id="txNote" maxlength="60" placeholder="e.g. Salary, M-Pesa, groceries" value="${esc(prevNote)}" autocomplete="off">
+      </div>
+      <div class="err" id="txErr" role="alert">${esc(txErr)}</div>
+      <div class="row2">
+        <button class="btn btn-add" id="doAdd">${PLUS} Add</button>
+        <button class="btn btn-ded" id="doDed">${MINUS} Deduct</button>
+      </div>
+      <div class="sec">History</div>
+      ${hist.length ? `<ul class="hist">${hist.map(h=>`<li class="${h.type==="out"?"out":"in"}">
+          <span class="dot">${h.type==="out"?"−":"+"}</span>
+          <span class="note">${esc(h.note || (h.type==="out"?"Deducted":"Added"))}<span class="when">${esc(ago(h.t))}</span></span>
+          <span class="v">${h.type==="out"?"−":"+"}${esc(money(h.amt))}</span></li>`).join("")}</ul>`
+        : `<div class="hist-empty">No transactions yet. Add an amount above.</div>`}
+    </div>`;
+  } else {
+    const isNew = k === "new";
+    body = `<div class="sheet" role="dialog" aria-modal="true" aria-label="${isNew?"New savings widget":"Edit savings"}">
+      <div class="sheet-head"><div class="sheet-title">${isNew?"New savings widget":"Edit savings"}</div>
+        <button class="icon-btn" id="closeBtn" aria-label="Close">${CLOSE}</button></div>
+      <div class="field"><label for="fName">Name</label><input class="input" id="fName" maxlength="28" placeholder="e.g. School fees" value="${esc(draft.name)}"></div>
+      ${isNew?`<div class="field"><label for="fStart">Starting balance (optional)</label>
+        <div class="money-in" style="--curw:${settings.currency.length}ch"><span class="cur">${esc(settings.currency)}</span><input class="input" id="fStart" inputmode="decimal" placeholder="0" value="${esc(draft.start)}"></div></div>`:""}
+      <div class="field"><label>Colour</label><div class="swatches">${Object.entries(THEMES).map(([key,t])=>
+        `<button class="sw" data-t="${key}" aria-label="${t.name}" aria-pressed="${draft.theme===key}" style="--c1:${t.c1};--c2:${t.c2}"></button>`).join("")}</div></div>
+      <div class="err" id="fErr" role="alert"></div>
+      <div class="row2"><button class="btn btn-ghost" id="cancelBtn">Cancel</button><button class="btn btn-add" id="saveBtn">${isNew?"Create widget":"Save changes"}</button></div>
+      ${!isNew?`<div class="foot-actions"><button class="link danger" id="delBtn">Delete this saving</button></div>
+        ${confirmDelete?`<div class="confirm">Delete “${esc(draft.name)}” and all its history? This can't be undone.
+          <div class="row2"><button class="btn btn-ghost" id="delNo">Keep it</button><button class="btn btn-danger" id="delYes">Delete</button></div></div>`:""}`:""}
+    </div>`;
+  }
+  layer.innerHTML = `<div class="scrim" id="scrim">${body}</div>`;
+  $("#scrim").addEventListener("click", e => { if (e.target.id==="scrim") closeSheet(); });
+  $("#closeBtn").onclick = closeSheet;
+  if (k === "detail") wireDetail(focus); else wireForm(focus);
+}
+
+function parseAmt(v){ const n = parseFloat(String(v).replace(/[^\d.]/g,"")); return isFinite(n) ? Math.round(n*100)/100 : NaN; }
+
+function wireDetail(focus){
+  const g = find(openSheet.id), amt = $("#txAmt");
+  if (focus) setTimeout(()=>amt.focus({preventScroll:true}), 60);
+  $("#editBtn").onclick = () => openEdit(g.id);
+  document.querySelectorAll(".chip").forEach(c => c.onclick = () => {
+    const cur = parseAmt(amt.value) || 0; amt.value = String(cur + +c.dataset.q); amt.focus();
+  });
+  const go = async type => {
+    const n = parseAmt(amt.value);
+    txErr = "";
+    if (!(n > 0)) txErr = "Enter an amount greater than 0.";
+    else if (type==="out" && n > balanceOf(g)) txErr = `You only have ${money(balanceOf(g))} in this saving.`;
+    if (txErr){ $("#txErr").textContent = txErr; amt.focus(); return; }
+    const note = $("#txNote").value.trim();
+    const history = [...(g.history||[]), {id:uid(), type, amt:n, note, t:Date.now()}].slice(-HIST_CAP);
+    amt.value = ""; $("#txNote").value = "";
+    try { await store.save({...g, history}); toast(type==="in" ? `Added ${money(n)}` : `Deducted ${money(n)}`); }
+    catch(e){ txErr = "Couldn't save that change. Check your connection and try again."; renderSheet(); }
+  };
+  $("#doAdd").onclick = () => go("in");
+  $("#doDed").onclick = () => go("out");
+  amt.addEventListener("keydown", e => { if (e.key==="Enter") go("in"); });
+}
+
+function wireForm(focus){
+  const isNew = openSheet.kind === "new";
+  const sync = () => { draft.name=$("#fName").value; if(isNew) draft.start=$("#fStart").value; };
+  if (focus) setTimeout(()=>$("#fName").focus({preventScroll:true}), 60);
+  document.querySelectorAll(".sw").forEach(b => b.onclick = () => { sync(); draft.theme=b.dataset.t; renderSheet(); });
+  $("#cancelBtn").onclick = () => isNew ? closeSheet() : openDetail(openSheet.id);
+  $("#saveBtn").onclick = async () => {
+    sync();
+    const name = draft.name.trim(), start = isNew ? parseAmt(draft.start||"0") : 0;
+    const err = !name ? "Give this goal a name." : (isNew && isNaN(start)) ? "Starting balance must be a number." : "";
+    if (err){ $("#fErr").textContent = err; return; }
+    try{
+      if (isNew){
+        const g = {id:uid(), name, theme:draft.theme, createdAt:Date.now(),
+          history: start>0 ? [{id:uid(), type:"in", amt:start, note:"Starting balance", t:Date.now()}] : []};
+        await store.save(g); closeSheet(); toast(`Created ${name}`);
+      } else {
+        const g = find(openSheet.id); const {target:_t, ...keep} = g; await store.save({...keep, name, theme:draft.theme}); openDetail(g.id);
+      }
+    }catch(e){ $("#fErr").textContent = "Couldn't save. Check your connection and try again."; }
+  };
+  if (!isNew){
+    $("#delBtn").onclick = () => { sync(); confirmDelete = true; renderSheet(); };
+    if (confirmDelete){
+      $("#delNo").onclick = () => { confirmDelete=false; renderSheet(); };
+      $("#delYes").onclick = async () => { const id=openSheet.id, nm=find(id)?.name; try{ await store.remove(id); closeSheet(); toast(`Deleted ${nm}`);}catch(e){ $("#fErr").textContent="Couldn't delete. Try again."; } };
+    }
+  }
+}
+
+document.addEventListener("keydown", e => { if (e.key==="Escape" && openSheet) closeSheet(); });
+let toastT;
+function toast(msg){
+  document.querySelector(".toast")?.remove();
+  const t = document.createElement("div"); t.className="toast"; t.setAttribute("role","status"); t.textContent=msg;
+  document.body.appendChild(t); clearTimeout(toastT); toastT=setTimeout(()=>t.remove(), 1800);
+}
+
+$("#addTop").onclick = openNew;
+$("#currency").onchange = async e => { settings = {...settings, currency:e.target.value}; renderAll(); try{ await store?.saveSettings(settings); }catch{} };
+
+/* ---------- storage ---------- */
+function clean(g){ const {id, ...rest} = g; return JSON.parse(JSON.stringify(rest)); }
+
+function dbStore(db, userId){
+  const col = db.collection("data/users/" + userId);
+  col.onSnapshot(snap => {
+    const list = [];
+    snap.docs.forEach(d => {
+      const v = d.data(); if (!v) return;
+      if (d.id === "settings") settings = {currency:"KSh", ...v};
+      else list.push({id:d.id, ...v});
+    });
+    goals = list.sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+    mode = "db"; renderAll();
+  }, err => { showBanner("Lost the connection to your saved goals. Reload the page to reconnect."); });
+  return {
+    save: g => col.doc(g.id).set(clean(g)),
+    remove: id => col.doc(id).delete(),
+    saveSettings: s => col.doc("settings").set({...s}),
+  };
+}
+
+function localStore(){
+  const KEY = "savings-jars-v2";
+  let data = null;
+  try { data = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem("savings-jars-v1") || "null"); } catch {}
+  if (!data){
+    const day = 86400000, now = Date.now();
+    const mk = (amts, start) => amts.map((a,i)=>({id:uid(), type:a<0?"out":"in", amt:Math.abs(a), note:i===0?"Starting balance":(a<0?"Withdrawal":"Deposit"), t:now-(amts.length-i)*day*3}));
+    data = { settings:{currency:"KSh"}, goals:[
+      {id:uid(), name:"Emergency", theme:"green", createdAt:1,
+       history: mk([60000,12000,8000,-4000,15000,9000,11000,-3000,20000,14000,-9000,26000,18000,-12000,15000,22000,17000,-6000,24000,19000,11000,16330])},
+      {id:uid(), name:"School fees", theme:"deep", createdAt:2,
+       history: mk([20000,5000,5000,-2500,8000,4000,6000,7500,-3000,9000,5000])},
+      {id:uid(), name:"Holiday", theme:"lime", createdAt:3,
+       history: mk([2000,1500,1500,-800,3000,1200,2500,1800])},
+    ]};
+  }
+  const persist = () => { try { localStorage.setItem(KEY, JSON.stringify({settings, goals})); } catch {} };
+  settings = data.settings || {currency:"KSh"}; goals = data.goals || []; mode = "local";
+  showBanner("These are example savings to show how it works. Your changes are saved in this browser only.");
+  renderAll();
+  return {
+    save: async g => { const i = goals.findIndex(x=>x.id===g.id); if (i<0) goals.push(g); else goals[i]=g; persist(); renderAll(); },
+    remove: async id => { goals = goals.filter(g=>g.id!==id); persist(); renderAll(); },
+    saveSettings: async () => persist(),
+  };
+}
+function showBanner(t){ const b=$("#banner"); b.textContent=t; b.hidden=false; }
+
+async function init(){
+  renderAll();
+  if (!window.claude?.use){ store = localStore(); return; }
+  let db=null, user=null, id=null;
+  try { [db, user] = await Promise.all([claude.use("db"), claude.use("user")]); } catch {}
+  try { id = user ? await user.id() : null; } catch {}
+  if (!db || !id){ store = localStore(); return; }
+  store = dbStore(db, id);
+}
+init();
+})();
+</script>

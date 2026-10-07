@@ -1,0 +1,15 @@
+node_modules/
+.next/
+.next-dev/
+.vercel/
+.env*
+# Local balances written by the dev server; never commit or upload these.
+data/
+.netlify/
+deno.lock
+
+.vercel
+
+# AI assistant instruction files (local only)
+CLAUDE.md
+AGENTS.md

@@ -1,0 +1,7 @@
+.next
+.next-dev
+.env*
+# Local balances written by the dev server; never upload these.
+data
+# Source images; the app serves the converted copies in public/card-images.
+IMAGES
